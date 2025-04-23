@@ -31,7 +31,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.linn.timele.AppViewModelProvider
 import com.linn.timele.ui.ItemViewModel
+import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,6 +50,7 @@ fun UpdateItemScreen(
 
     var name by remember { mutableStateOf("") }
     var price by remember { mutableStateOf("") }
+    val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
 
     LaunchedEffect(item) {
         item?.let {
@@ -118,6 +121,14 @@ fun UpdateItemScreen(
                 onValueChange = { price = it },
                 label = { Text("Price") },
                 modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Selected Date: ${datePickerState.selectedDateMillis?.let {
+                    dateFormat.format(Date(it))
+                } ?: "Not selected"}",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(horizontal = 16.dp)
             )
             Spacer(modifier = Modifier.height(8.dp))
             Button(
