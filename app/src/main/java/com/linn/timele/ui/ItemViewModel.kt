@@ -49,12 +49,12 @@ class ItemViewModel(private val itemRepository: ItemRepository) : ViewModel() {
         }
     }
 
-    fun addItem(name: String, price: Double) {
+    fun addItem(name: String, price: Double, createDate: Date = Date()) {
         viewModelScope.launch {
             val item = Item(
                 name = name,
                 price = price,
-                createDate = Date()
+                createDate = createDate
             )
             itemRepository.insertItem(item)
         }
