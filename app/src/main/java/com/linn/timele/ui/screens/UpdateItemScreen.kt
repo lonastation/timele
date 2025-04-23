@@ -19,24 +19,43 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import com.linn.timele.AppViewModelProvider
+import com.linn.timele.ui.ItemViewModel
 import java.util.Date
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddItemScreen(
-    onSave: (String, Double, Date) -> Unit,
-    onCancel: () -> Unit
+fun UpdateItemScreen(
+    itemId: String,
+    viewModel: ItemViewModel = viewModel(factory = AppViewModelProvider.Factory),
+    navController: NavController
 ) {
+    val item by viewModel.getItem(itemId).collectAsState(initial = null)
+    var showDatePicker by remember { mutableStateOf(false) }
+    val datePickerState = rememberDatePickerState(
+        initialSelectedDateMillis = item?.createDate?.time ?: System.currentTimeMillis()
+    )
+
     var name by remember { mutableStateOf("") }
     var price by remember { mutableStateOf("") }
-    var showDatePicker by remember { mutableStateOf(false) }
-    val datePickerState = rememberDatePickerState()
+
+    LaunchedEffect(item) {
+        item?.let {
+            name = it.name
+            price = it.price.toString()
+            datePickerState.selectedDateMillis = it.createDate.time
+        }
+    }
 
     Scaffold(
         bottomBar = {
@@ -47,7 +66,9 @@ fun AddItemScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Button(
-                    onClick = onCancel,
+                    onClick = {
+                        navController.popBackStack()
+                    },
                     modifier = Modifier.weight(1f)
                 ) {
                     Text("Cancel")
@@ -57,7 +78,13 @@ fun AddItemScreen(
                         val priceValue = price.toDoubleOrNull() ?: 0.0
                         val selectedDate =
                             datePickerState.selectedDateMillis?.let { Date(it) } ?: Date()
-                        onSave(name, priceValue, selectedDate)
+                        viewModel.updateItem(
+                            itemId = itemId.toLong(),
+                            name = name,
+                            priceValue,
+                            selectedDate
+                        )
+                        navController.popBackStack()
                     },
                     enabled = name.isNotBlank() && price.isNotBlank() && price.toDoubleOrNull() != null,
                     modifier = Modifier.weight(1f)
@@ -71,10 +98,9 @@ fun AddItemScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp)
         ) {
             Text(
-                text = "Add New Item",
+                text = "Update Item",
                 style = MaterialTheme.typography.headlineMedium,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
@@ -85,6 +111,7 @@ fun AddItemScreen(
                 label = { Text("Item Name") },
                 modifier = Modifier.fillMaxWidth()
             )
+
             Spacer(modifier = Modifier.height(8.dp))
             OutlinedTextField(
                 value = price,
