@@ -30,7 +30,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.linn.timele.AppViewModelProvider
-import com.linn.timele.ui.ItemViewModel
+import com.linn.timele.navigation.Screen
+import com.linn.timele.ui.UpdateItemViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -39,10 +40,10 @@ import java.util.Locale
 @Composable
 fun UpdateItemScreen(
     itemId: String,
-    viewModel: ItemViewModel = viewModel(factory = AppViewModelProvider.Factory),
+    viewModel: UpdateItemViewModel = viewModel(factory = AppViewModelProvider.Factory),
     navController: NavController
 ) {
-    val item by viewModel.getItem(itemId).collectAsState(initial = null)
+    val item by viewModel.getItem(itemId.toLong()).collectAsState(initial = null)
     var showDatePicker by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState(
         initialSelectedDateMillis = item?.createDate?.time ?: System.currentTimeMillis()
@@ -94,48 +95,61 @@ fun UpdateItemScreen(
                 ) {
                     Text("Save")
                 }
+                Button(
+                    onClick = {
+                        viewModel.deleteItem(itemId.toLong())
+                        navController.navigate(Screen.ItemList.route)
+                    },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Delete")
+                }
             }
         }
     ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            Text(
-                text = "Update Item",
-                style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
-
-            OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
-                label = { Text("Item Name") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-            OutlinedTextField(
-                value = price,
-                onValueChange = { price = it },
-                label = { Text("Price") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Selected Date: ${datePickerState.selectedDateMillis?.let {
-                    dateFormat.format(Date(it))
-                } ?: "Not selected"}",
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(
-                onClick = { showDatePicker = true },
-                modifier = Modifier.fillMaxWidth()
+        if (item != null) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
             ) {
-                Text("Select Creation Date")
+                Text(
+                    text = "Update Item",
+                    style = MaterialTheme.typography.headlineMedium,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Item Name") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = price,
+                    onValueChange = { price = it },
+                    label = { Text("Price") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Selected Date: ${
+                        datePickerState.selectedDateMillis?.let {
+                            dateFormat.format(Date(it))
+                        } ?: "Not selected"
+                    }",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(
+                    onClick = { showDatePicker = true },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Select Creation Date")
+                }
             }
         }
     }

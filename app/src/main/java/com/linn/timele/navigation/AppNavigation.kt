@@ -7,6 +7,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.linn.timele.AppViewModelProvider
 import com.linn.timele.ui.ItemViewModel
+import com.linn.timele.ui.UpdateItemViewModel
 import com.linn.timele.ui.screens.AddItemScreen
 import com.linn.timele.ui.screens.ItemListScreen
 import com.linn.timele.ui.screens.UpdateItemScreen
@@ -22,7 +23,8 @@ sealed class Screen(val route: String) {
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
-    val viewModel: ItemViewModel = viewModel(factory = AppViewModelProvider.Factory)
+    val itemViewModel: ItemViewModel = viewModel(factory = AppViewModelProvider.Factory)
+    val updateItemViewModel: UpdateItemViewModel = viewModel(factory = AppViewModelProvider.Factory)
 
     NavHost(
         navController = navController,
@@ -30,7 +32,7 @@ fun AppNavigation() {
     ) {
         composable(Screen.ItemList.route) {
             ItemListScreen(
-                viewModel = viewModel,
+                viewModel = itemViewModel,
                 onAddItemClick = {
                     navController.navigate(Screen.AddItem.route)
                 },
@@ -40,7 +42,7 @@ fun AppNavigation() {
         composable(Screen.AddItem.route) {
             AddItemScreen(
                 onSave = { name, price, date ->
-                    viewModel.addItem(name, price, date)
+                    itemViewModel.addItem(name, price, date)
                     navController.popBackStack()
                 },
                 onCancel = {
@@ -52,7 +54,7 @@ fun AppNavigation() {
             val itemId = backStackEntry.arguments?.getString("itemId") ?: return@composable
             UpdateItemScreen(
                 itemId = itemId,
-                viewModel = viewModel,
+                viewModel = updateItemViewModel,
                 navController = navController
             )
         }

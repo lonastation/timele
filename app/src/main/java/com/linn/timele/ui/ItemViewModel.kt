@@ -7,7 +7,6 @@ import com.linn.timele.data.ItemRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.util.Date
 import java.util.concurrent.TimeUnit
@@ -50,10 +49,6 @@ class ItemViewModel(private val itemRepository: ItemRepository) : ViewModel() {
         }
     }
 
-    fun getItem(itemId: String) = itemRepository.getItemById(itemId.toLong()).map { item ->
-        item
-    }
-
     fun addItem(name: String, price: Double, createDate: Date = Date()) {
         viewModelScope.launch {
             val item = Item(
@@ -62,30 +57,6 @@ class ItemViewModel(private val itemRepository: ItemRepository) : ViewModel() {
                 createDate = createDate
             )
             itemRepository.insertItem(item)
-        }
-    }
-
-    fun deleteItem(itemId: Long) {
-        viewModelScope.launch {
-            val itemToDelete = Item(
-                id = itemId,
-                name = "",
-                price = 0.0,
-                createDate = Date()
-            )
-            itemRepository.deleteItem(itemToDelete)
-        }
-    }
-
-    fun updateItem(itemId: Long, name: String, price: Double, createDate: Date) {
-        viewModelScope.launch {
-            val updatedItem = Item(
-                id = itemId,
-                name = name,
-                price = price,
-                createDate = createDate
-            )
-            itemRepository.updateItem(updatedItem)
         }
     }
 } 
