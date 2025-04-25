@@ -1,39 +1,53 @@
 package com.linn.timele.ui
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.linn.timele.data.Item
 import com.linn.timele.data.ItemRepository
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
+import com.linn.timele.navigation.ItemDetailsDestination
+import com.linn.timele.ui.components.ItemDetails
+import com.linn.timele.ui.components.toItem
+import com.linn.timele.ui.components.toItemDetails
 import kotlinx.coroutines.launch
-import java.util.Date
 
-class UpdateItemViewModel(private val itemRepository: ItemRepository) : ViewModel() {
-    
-    fun getItem(itemId: Long): Flow<Item?> = itemRepository.getItemById(itemId)
+class UpdateItemViewModel(
+    savedStateHandle: SavedStateHandle,
+    private val itemRepository: ItemRepository
+) : ViewModel() {
 
-    fun updateItem(itemId: Long, name: String, price: Double, createDate: Date) {
+    var itemUiState by mutableStateOf(ItemUiState())
+        private set
+
+    private val itemId: Long = checkNotNull(savedStateHandle[ItemDetailsDestination.ITEM_ID_ARG])
+
+    init {
         viewModelScope.launch {
-            val updatedItem = Item(
-                id = itemId,
-                name = name,
-                price = price,
-                createDate = createDate
-            )
-            itemRepository.updateItem(updatedItem)
+            itemRepository.getItemById(itemId).collect { item ->
+                item?.let {
+                    itemUiState = itemUiState.copy(
+                        itemDetails = it.toItemDetails()
+                    )
+                }
+            }
         }
     }
 
-    fun deleteItem(itemId: Long) {
-        viewModelScope.launch {
-            val itemToDelete = Item(
-                id = itemId,
-                name = "",
-                price = 0.0,
-                createDate = Date()
-            )
-            itemRepository.deleteItem(itemToDelete)
-        }
+    fun updateItemUiState(itemDetails: ItemDetails) {
+        itemUiState = ItemUiState(itemDetails = itemDetails)
     }
-} 
+
+
+    suspend fun updateItem() {
+        itemRepository.updateItem(itemUiState.itemDetails.toItem())
+    }
+
+    suspend fun deleteItem() {
+        itemRepository.deleteItem(item = itemUiState.itemDetails.toItem())
+    }
+}
+
+data class ItemUiState(val itemDetails: ItemDetails = ItemDetails())
+

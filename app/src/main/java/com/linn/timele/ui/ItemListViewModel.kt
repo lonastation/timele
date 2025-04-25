@@ -6,7 +6,6 @@ import com.linn.timele.data.Item
 import com.linn.timele.data.ItemRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.util.Date
 import java.util.concurrent.TimeUnit
@@ -18,18 +17,15 @@ data class ItemDisplay(
     val averagePricePerDay: Double
 )
 
-class ItemViewModel(private val itemRepository: ItemRepository) : ViewModel() {
-    private val _items = MutableStateFlow<List<ItemDisplay>>(emptyList())
-    val items: StateFlow<List<ItemDisplay>> = _items.asStateFlow()
+class ItemListViewModel(private val itemRepository: ItemRepository) : ViewModel() {
+
+    private var _listUiState = MutableStateFlow(ListUiState(listOf()))
+    val listUiState: StateFlow<ListUiState> = _listUiState
 
     init {
-        loadItems()
-    }
-
-    private fun loadItems() {
         viewModelScope.launch {
             itemRepository.getAllItems().collect { items ->
-                _items.value = items.map { item ->
+                _listUiState.value = ListUiState(items.map { item ->
                     val daysSinceCreation = TimeUnit.MILLISECONDS.toDays(
                         Date().time - item.createDate.time
                     )
@@ -44,7 +40,7 @@ class ItemViewModel(private val itemRepository: ItemRepository) : ViewModel() {
                         daysSinceCreation = daysSinceCreation,
                         averagePricePerDay = averagePricePerDay
                     )
-                }
+                })
             }
         }
     }
@@ -59,4 +55,6 @@ class ItemViewModel(private val itemRepository: ItemRepository) : ViewModel() {
             itemRepository.insertItem(item)
         }
     }
-} 
+}
+
+data class ListUiState(val itemList: List<ItemDisplay> = listOf())

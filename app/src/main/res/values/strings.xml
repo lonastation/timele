@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">timele</string>
+    <string name="update_item_title">Update Item</string>
 </resources>

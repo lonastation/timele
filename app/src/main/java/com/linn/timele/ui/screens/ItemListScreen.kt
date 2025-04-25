@@ -19,16 +19,16 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.linn.timele.AppViewModelProvider
-import com.linn.timele.ui.ItemViewModel
+import com.linn.timele.ui.ItemListViewModel
 import com.linn.timele.ui.components.ItemCard
 
 @Composable
 fun ItemListScreen(
-    viewModel: ItemViewModel = viewModel(factory = AppViewModelProvider.Factory),
+    viewModel: ItemListViewModel = viewModel(factory = AppViewModelProvider.Factory),
     onAddItemClick: () -> Unit,
     navController: NavController
 ) {
-    val items by viewModel.items.collectAsState()
+    val listUiState by viewModel.listUiState.collectAsState()
 
     Scaffold(
         floatingActionButton = {
@@ -53,7 +53,7 @@ fun ItemListScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(items) { item ->
+                items(listUiState.itemList) { item ->
                     ItemCard(
                         item = item,
                         onEdit = {

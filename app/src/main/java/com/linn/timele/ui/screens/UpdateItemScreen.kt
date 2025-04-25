@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -19,19 +20,20 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.linn.timele.AppViewModelProvider
-import com.linn.timele.navigation.Screen
 import com.linn.timele.ui.UpdateItemViewModel
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -39,27 +41,18 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UpdateItemScreen(
-    itemId: String,
+    navigateBack: () -> Unit,
+    modifier: Modifier = Modifier,
     viewModel: UpdateItemViewModel = viewModel(factory = AppViewModelProvider.Factory),
-    navController: NavController
 ) {
-    val item by viewModel.getItem(itemId.toLong()).collectAsState(initial = null)
+    val coroutineScope = rememberCoroutineScope()
+
     var showDatePicker by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState(
-        initialSelectedDateMillis = item?.createDate?.time ?: System.currentTimeMillis()
+        initialSelectedDateMillis = viewModel.itemUiState.itemDetails.createDate.time
     )
-
-    var name by remember { mutableStateOf("") }
-    var price by remember { mutableStateOf("") }
     val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
 
-    LaunchedEffect(item) {
-        item?.let {
-            name = it.name
-            price = it.price.toString()
-            datePickerState.selectedDateMillis = it.createDate.time
-        }
-    }
 
     Scaffold(
         bottomBar = {
@@ -71,7 +64,7 @@ fun UpdateItemScreen(
             ) {
                 Button(
                     onClick = {
-                        navController.popBackStack()
+                        navigateBack()
                     },
                     modifier = Modifier.weight(1f)
                 ) {
@@ -79,26 +72,22 @@ fun UpdateItemScreen(
                 }
                 Button(
                     onClick = {
-                        val priceValue = price.toDoubleOrNull() ?: 0.0
-                        val selectedDate =
-                            datePickerState.selectedDateMillis?.let { Date(it) } ?: Date()
-                        viewModel.updateItem(
-                            itemId = itemId.toLong(),
-                            name = name,
-                            priceValue,
-                            selectedDate
-                        )
-                        navController.popBackStack()
+                        coroutineScope.launch {
+                            viewModel.updateItem()
+                            navigateBack()
+                        }
                     },
-                    enabled = name.isNotBlank() && price.isNotBlank() && price.toDoubleOrNull() != null,
+                    enabled = viewModel.itemUiState.itemDetails.name.isNotBlank(),
                     modifier = Modifier.weight(1f)
                 ) {
                     Text("Save")
                 }
                 Button(
                     onClick = {
-                        viewModel.deleteItem(itemId.toLong())
-                        navController.navigate(Screen.ItemList.route)
+                        coroutineScope.launch {
+                            viewModel.deleteItem()
+                            navigateBack()
+                        }
                     },
                     modifier = Modifier.weight(1f)
                 ) {
@@ -107,49 +96,60 @@ fun UpdateItemScreen(
             }
         }
     ) { paddingValues ->
-        if (item != null) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            Text(
+                text = "Update Item",
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+
+            OutlinedTextField(
+                value = viewModel.itemUiState.itemDetails.name,
+                onValueChange = {
+                    viewModel.updateItemUiState(
+                        itemDetails = viewModel.itemUiState.itemDetails.copy(
+                            name = it
+                        )
+                    )
+                },
+                label = { Text("Item Name") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedTextField(
+                value = viewModel.itemUiState.itemDetails.price,
+                onValueChange = {
+                    viewModel.updateItemUiState(
+                        itemDetails = viewModel.itemUiState.itemDetails.copy(
+                            price = it
+                        )
+                    )
+                },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                label = { Text("Price") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Selected Date: ${
+                    datePickerState.selectedDateMillis?.let {
+                        dateFormat.format(Date(it))
+                    } ?: "Not selected"
+                }",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(
+                onClick = { showDatePicker = true },
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Text(
-                    text = "Update Item",
-                    style = MaterialTheme.typography.headlineMedium,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Item Name") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = price,
-                    onValueChange = { price = it },
-                    label = { Text("Price") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Selected Date: ${
-                        datePickerState.selectedDateMillis?.let {
-                            dateFormat.format(Date(it))
-                        } ?: "Not selected"
-                    }",
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(horizontal = 16.dp)
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Button(
-                    onClick = { showDatePicker = true },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Select Creation Date")
-                }
+                Text("Select Creation Date")
             }
         }
     }
