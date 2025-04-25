@@ -13,6 +13,8 @@ import java.util.concurrent.TimeUnit
 data class ItemDisplay(
     val id: Long,
     val name: String,
+    val price: String,
+    val createDate: String,
     val daysSinceCreation: Long,
     val averagePricePerDay: Double
 )
@@ -37,6 +39,8 @@ class ItemListViewModel(private val itemRepository: ItemRepository) : ViewModel(
                     ItemDisplay(
                         id = item.id,
                         name = item.name,
+                        price = item.price.toString(),
+                        createDate = item.createDate.toString(),
                         daysSinceCreation = daysSinceCreation,
                         averagePricePerDay = averagePricePerDay
                     )

@@ -41,14 +41,14 @@ fun ItemCard(
             ) {
                 Text(
                     text = "No.${item.id} ${item.name}",
-                    style = MaterialTheme.typography.titleLarge
+                    style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
                     text = "Days since creation: ${item.daysSinceCreation}",
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
-                    text = "Average price per day: $${
+                    text = "Avg price per day: $${
                         String.format(
                             Locale.US,
                             "%.2f",
@@ -63,7 +63,7 @@ fun ItemCard(
             onClick = onEdit,
             modifier = Modifier
                 .padding(16.dp)
-                .align(Alignment.TopEnd)
+                .align(Alignment.CenterEnd)
         ) {
             Icon(
                 painter = painterResource(id = android.R.drawable.ic_menu_edit),
@@ -79,6 +79,8 @@ fun ItemCardPreview() {
     val sampleItem = ItemDisplay(
         id = 1L,
         name = "Sample Item",
+        price = "75",
+        createDate = "2024-01-01",
         daysSinceCreation = 30L,
         averagePricePerDay = 2.5
     )

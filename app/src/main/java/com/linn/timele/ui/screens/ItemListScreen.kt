@@ -46,7 +46,6 @@ fun ItemListScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp)
         ) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
